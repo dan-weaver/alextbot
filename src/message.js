@@ -7,6 +7,7 @@ const recastai = require('recastai')
 
 // This function is the core of the bot behaviour
 const replyMessage = (message) => {
+  console.log("MESSAGE----", message);
   // Instantiate Recast.AI SDK, just for request service
   const request = new recastai.request(process.env.REQUEST_TOKEN, process.env.LANGUAGE)
   // Get text from message received
@@ -30,8 +31,7 @@ const replyMessage = (message) => {
     if (result.action) {
       console.log('The conversation action is: ', result.action.slug)
     }
-    
-    console.log(result);
+
 
     // If there is not any message return by Recast.AI for this current conversation
     if (!result.replies.length) {
