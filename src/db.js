@@ -36,5 +36,3 @@ function addOrUpdateContact (name, conversation, participant, senderId) {
       console.log(data)
     })
 }
-
-addOrUpdateContact('Bob Bobb', uuid(), uuid(), uuid())
