@@ -3,13 +3,17 @@
  * This file contains your bot code
  */
 
+const db = require('./db')
 const recastai = require('recastai')
 
 // This function is the core of the bot behaviour
-const replyMessage = (message) => {
-  console.log("MESSAGE----", message);
+const replyMessage = message => {
+  console.log('MESSAGE----', message)
   // Instantiate Recast.AI SDK, just for request service
-  const request = new recastai.request(process.env.REQUEST_TOKEN, process.env.LANGUAGE)
+  const request = new recastai.request(
+    process.env.REQUEST_TOKEN,
+    process.env.LANGUAGE
+  )
   // Get text from message received
   const text = message.content
 
@@ -19,40 +23,55 @@ const replyMessage = (message) => {
   const senderId = message.senderId
 
   // Call Recast.AI SDK, through /converse route
-  request.converseText(text, { conversationToken: senderId })
-  .then(result => {
-    /*
+  request
+    .converseText(text, { conversationToken: senderId })
+    .then(result => {
+      /*
     * YOUR OWN CODE
     * Here, you can add your own process.
     * Ex: You can call any external API
     * Or: Update your mongo DB
     * etc...
     */
-    if (result.action) {
-      console.log('The conversation action is: ', result.action.slug)
-    }
+      if (result.action) {
+        console.log('The conversation action is: ', result.action.slug)
+      }
 
+      if (result.action === 'yes' && message.origin === 'messenger') {
+        db.addOrUpdateContact(
+          message.message.data.userName,
+          message.message.conversaton,
+          message.message.participant,
+          message.senderId
+        )
+      }
 
-    // If there is not any message return by Recast.AI for this current conversation
-    if (!result.replies.length) {
-      message.addReply({ type: 'text', content: 'I don\'t have the reply to this yet :)' })
-    } else {
-      // Add each reply received from API to replies stack
-      result.replies.forEach(replyContent => message.addReply({ type: 'text', content: replyContent }))
-    }
+      // If there is not any message return by Recast.AI for this current conversation
+      if (!result.replies.length) {
+        message.addReply({
+          type: 'text',
+          content: 'I don\'t have the reply to this yet :)',
+        })
+      } else {
+        // Add each reply received from API to replies stack
+        result.replies.forEach(replyContent =>
+          message.addReply({ type: 'text', content: replyContent })
+        )
+      }
 
-    // Send all replies
-    message.reply()
-    .then(() => {
-      // Do some code after sending messages
+      // Send all replies
+      message
+        .reply()
+        .then(() => {
+          // Do some code after sending messages
+        })
+        .catch(err => {
+          console.error('Error while sending message to channel', err)
+        })
     })
     .catch(err => {
-      console.error('Error while sending message to channel', err)
+      console.error('Error while sending message to Recast.AI', err)
     })
-  })
-  .catch(err => {
-    console.error('Error while sending message to Recast.AI', err)
-  })
 }
 
 module.exports = replyMessage
